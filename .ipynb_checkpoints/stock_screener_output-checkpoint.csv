@@ -1,0 +1,31 @@
+Stock,Prediction,Confidence,RSI,MACD,Close
+RELIANCE.NS,Bullish,58.09,60.06,34.87,"Ticker
+RELIANCE.NS    1426.8
+Name: 2025-05-23 00:00:00, dtype: float64"
+TCS.NS,Bullish,55.43,52.56,16.92,"Ticker
+TCS.NS    3514.6
+Name: 2025-05-23 00:00:00, dtype: float64"
+INFY.NS,Bullish,54.97,53.6,12.75,"Ticker
+INFY.NS    1564.8
+Name: 2025-05-23 00:00:00, dtype: float64"
+HDFCBANK.NS,Bullish,58.56,56.41,20.06,"Ticker
+HDFCBANK.NS    1933.6
+Name: 2025-05-23 00:00:00, dtype: float64"
+ICICIBANK.NS,Bullish,56.66,61.05,22.08,"Ticker
+ICICIBANK.NS    1449.8
+Name: 2025-05-23 00:00:00, dtype: float64"
+SBIN.NS,Bullish,59.47,56.84,7.17,"Ticker
+SBIN.NS    790.5
+Name: 2025-05-23 00:00:00, dtype: float64"
+HINDUNILVR.NS,Bullish,55.22,52.55,10.66,"Ticker
+HINDUNILVR.NS    2359.2
+Name: 2025-05-23 00:00:00, dtype: float64"
+ITC.NS,Bullish,53.51,57.43,3.21,"Ticker
+ITC.NS    436.3
+Name: 2025-05-23 00:00:00, dtype: float64"
+BHARTIARTL.NS,Bullish,55.29,51.77,10.01,"Ticker
+BHARTIARTL.NS    1831.7
+Name: 2025-05-23 00:00:00, dtype: float64"
+KOTAKBANK.NS,Bullish,53.57,48.02,-10.37,"Ticker
+KOTAKBANK.NS    2100.8
+Name: 2025-05-23 00:00:00, dtype: float64"
