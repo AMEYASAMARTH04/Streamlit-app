@@ -668,3 +668,11 @@ with tab3:
                 </div>""", unsafe_allow_html=True)
     else:
         st.error(f"Could not fetch data for {chart_symbol}. Please check your internet connection.")
+
+
+
+
+
+
+#####################################################
+
