@@ -160,8 +160,8 @@ def predict():
             'company': company,
             'symbol': symbol,
             'advice': result['advice'],
-            'bullish_percentage': result['bullish_conf'],
-            'bearish_percentage': result['bearish_conf'],
+            'bullish_percentage': float(result['bullish_conf']),
+            'bearish_percentage': float(result['bearish_conf']),
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
