@@ -69,7 +69,6 @@ def add_indicators(df):
         high   = pd.Series(df['High'].values.flatten(),   index=df.index)
         low    = pd.Series(df['Low'].values.flatten(),    index=df.index)
         volume = pd.Series(df['Volume'].values.flatten(), index=df.index)
-
         df['RSI']           = ta.momentum.RSIIndicator(close=close, window=14).rsi()
         df['Stoch_K']       = ta.momentum.StochasticOscillator(high=high, low=low, close=close, window=14).stoch()
         df['Stoch_D']       = ta.momentum.StochasticOscillator(high=high, low=low, close=close, window=14).stoch_signal()
@@ -91,12 +90,10 @@ def add_indicators(df):
         print(f"Indicator error: {e}")
     return df
 
-
 def predict_single_stock(symbol, model_dir):
     model_path = os.path.join(model_dir, f"{symbol}_model.joblib")
     if not os.path.exists(model_path):
         return None, "Model file not found"
-
     df = yf.download(symbol, start="2022-01-01",
                      end=datetime.now().strftime('%Y-%m-%d'),
                      auto_adjust=True, progress=False)
@@ -104,18 +101,15 @@ def predict_single_stock(symbol, model_dir):
         df.columns = df.columns.get_level_values(0)
     if df.empty:
         return None, "No data"
-
     df = add_indicators(df)
     df['Close_lag_1'] = df['Close'].shift(1)
     df['Close_lag_2'] = df['Close'].shift(2)
     df['Close_lag_3'] = df['Close'].shift(3)
     df.dropna(inplace=True)
-
     features = ['RSI','SMA_20','SMA_50','EMA_20','MACD','MACD_Signal',
                 'Stoch_K','Stoch_D','Volume_SMA_20','Daily_Return','Momentum',
                 'BB_Upper','BB_Lower','ATR','Close_lag_1','Close_lag_2','Close_lag_3']
     features = [f for f in features if f in df.columns]
-
     try:
         from sklearn.preprocessing import StandardScaler
         model = joblib.load(model_path)
@@ -124,7 +118,6 @@ def predict_single_stock(symbol, model_dir):
         upper = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
         drop_list = [col for col in upper.columns if any(upper[col] > 0.9)]
         X = X.drop(columns=drop_list, errors='ignore')
-
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
         latest_scaled = X_scaled[-1].reshape(1, -1)
@@ -144,11 +137,9 @@ def predict_single_stock(symbol, model_dir):
     except Exception as e:
         return None, str(e)
 
-
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({'status': 'ok'})
-
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -156,19 +147,15 @@ def predict():
         data = request.json
         if not data:
             return jsonify({'error': 'No JSON body sent'}), 400
-
         company = data.get('company')
         if not company:
             return jsonify({'error': 'company field is required'}), 400
-
         symbol = STOCK_CATEGORIES.get(company)
         if not symbol:
             return jsonify({'error': f'Company "{company}" not found'}), 404
-
         result, err = predict_single_stock(symbol, DEFAULT_MODEL_DIR)
         if err:
             return jsonify({'error': err}), 500
-
         return jsonify({
             'company': company,
             'symbol': symbol,
@@ -178,7 +165,6 @@ def predict():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
