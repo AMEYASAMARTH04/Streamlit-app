@@ -11,6 +11,51 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from flask import Flask, jsonify, request
+import threading
+
+# ─────────────────────────────────────────────
+# FLASK API (runs in background thread)
+# ─────────────────────────────────────────────
+flask_app = Flask(__name__)
+
+@flask_app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.json
+        company = data.get('company')
+        if not company:
+            return jsonify({'error': 'company is required'}), 400
+
+        symbol = STOCK_CATEGORIES.get(company)
+        if not symbol:
+            return jsonify({'error': f'Company "{company}" not found'}), 404
+
+        result, err = predict_single_stock(symbol, DEFAULT_MODEL_DIR)
+        if err:
+            return jsonify({'error': err}), 500
+
+        return jsonify({
+            'company': company,
+            'symbol': symbol,
+            'advice': result['advice'],
+            'bullish_percentage': result['bullish_conf'],
+            'bearish_percentage': result['bearish_conf'],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@flask_app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'})
+
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=8000)
+
+# Start Flask in background thread
+flask_thread = threading.Thread(target=run_flask, daemon=True)
+flask_thread.start()
+
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -124,7 +169,6 @@ STOCK_CATEGORIES = {
     'Wipro': 'WIPRO.NS',
 }
 
-# Path to models folder (set via sidebar or default)
 DEFAULT_MODEL_DIR = "models"
 PREDICTIONS_CSV = os.path.join("powerbi", "predictions_today.csv")
 
@@ -401,7 +445,6 @@ with tab1:
         else:
             filtered_sorted = filtered.sort_values('Bullish_Confidence', ascending=False).reset_index(drop=True)
 
-            # Build HTML table
             rows_html = ""
             for _, row in filtered_sorted.iterrows():
                 pred_cls = "bullish-badge" if row['Prediction']=='Bullish' else "bearish-badge"
@@ -461,7 +504,6 @@ with tab2:
     selected_symbol = STOCK_CATEGORIES[selected_name]
     st.caption(f"Symbol: `{selected_symbol}`")
 
-    # Show saved prediction if available
     df_preds2 = load_saved_predictions(predictions_csv)
     if df_preds2 is not None and not df_preds2.empty:
         row = df_preds2[df_preds2['Symbol']==selected_symbol]
@@ -506,8 +548,6 @@ with tab2:
                 <div class="metric-value" style="color:#f87171">{result['bearish_conf']}%</div></div>""",
                 unsafe_allow_html=True)
 
-            # Confidence gauge
-            st.markdown("")
             fig_gauge = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
                 value=result['bullish_conf'],
@@ -584,7 +624,6 @@ with tab3:
 
         close_vals = df_ind['Close'].values.flatten()
 
-        # Candlestick
         fig_main.add_trace(go.Candlestick(
             x=df_ind.index,
             open=df_ind['Open'].values.flatten(),
@@ -607,7 +646,6 @@ with tab3:
                 line=dict(color='#94a3b8', width=0.8, dash='dash'),
                 fill='tonexty', fillcolor='rgba(148,163,184,0.05)', opacity=0.5), row=1, col=1)
 
-        # Volume
         if show_vol:
             vol_colors = ['#34d399' if c >= o else '#f87171'
                           for c, o in zip(df_ind['Close'].values.flatten(),
@@ -616,7 +654,6 @@ with tab3:
                 name='Volume', marker_color=vol_colors, opacity=0.6), row=2, col=1)
 
         if indicators_ok:
-            # MACD
             hist_colors = ['#34d399' if v >= 0 else '#f87171' for v in df_ind['MACD_Hist'].fillna(0)]
             fig_main.add_trace(go.Bar(x=df_ind.index, y=df_ind['MACD_Hist'],
                 name='MACD Hist', marker_color=hist_colors, opacity=0.7), row=3, col=1)
@@ -625,7 +662,6 @@ with tab3:
             fig_main.add_trace(go.Scatter(x=df_ind.index, y=df_ind['MACD_Signal'],
                 name='Signal', line=dict(color='#f59e0b', width=1.5)), row=3, col=1)
 
-            # RSI
             fig_main.add_trace(go.Scatter(x=df_ind.index, y=df_ind['RSI'],
                 name='RSI', line=dict(color='#a78bfa', width=1.5)), row=4, col=1)
             fig_main.add_hline(y=70, line_dash='dash', line_color='#f87171', line_width=1, row=4, col=1)
@@ -646,7 +682,6 @@ with tab3:
 
         st.plotly_chart(fig_main, use_container_width=True)
 
-        # Latest indicator values
         if indicators_ok:
             st.markdown('<div class="section-header">Latest Indicator Values</div>', unsafe_allow_html=True)
             last = df_ind.iloc[-1]
@@ -668,11 +703,3 @@ with tab3:
                 </div>""", unsafe_allow_html=True)
     else:
         st.error(f"Could not fetch data for {chart_symbol}. Please check your internet connection.")
-
-
-
-
-
-
-#####################################################
-
